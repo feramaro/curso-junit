@@ -1,7 +1,8 @@
 package br.com.amaro.api.resources;
 
-import br.com.amaro.api.domain.User;
+import br.com.amaro.api.domain.dto.UserDTO;
 import br.com.amaro.api.services.UserService;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,10 +15,13 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserResource {
 
     @Autowired
+    private ModelMapper mapper;
+
+    @Autowired
     private UserService serivce;
 
     @GetMapping("/{id}")
-    public ResponseEntity<User> findById(@PathVariable Integer id) {
-        return ResponseEntity.ok().body(serivce.findById(id));
+    public ResponseEntity<UserDTO> findById(@PathVariable Integer id) {
+        return ResponseEntity.ok().body(mapper.map(serivce.findById(id), UserDTO.class));
     }
 }
