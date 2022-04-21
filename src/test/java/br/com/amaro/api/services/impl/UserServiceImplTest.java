@@ -3,6 +3,7 @@ package br.com.amaro.api.services.impl;
 import br.com.amaro.api.domain.User;
 import br.com.amaro.api.domain.dto.UserDTO;
 import br.com.amaro.api.repositories.UserRepository;
+import br.com.amaro.api.services.exceptions.DataIntegratyViolationException;
 import br.com.amaro.api.services.exceptions.ObjectNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,9 +18,8 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 @SpringBootTest
 class UserServiceImplTest {
@@ -30,6 +30,7 @@ class UserServiceImplTest {
     public static final String PASSWORD = "teste123";
     public static final String OBJECT_NOT_FOUND = "Object not found";
     public static final int INDEX = 0;
+    public static final String EMAIL_CADASTRADO = "Email já cadastrado no sistema";
 
     @InjectMocks
     private UserServiceImpl service;
@@ -88,15 +89,59 @@ class UserServiceImplTest {
         assertEquals(User.class, response.getClass());
         assertEquals(ID, response.getId());
         assertEquals(EMAIL, response.getEmail());
-
     }
 
     @Test
-    void update() {
+    void whenCreateTheReturnDataIntegrityViolationException() {
+        when(repository.findByEmail(anyString())).thenReturn(optionalUser);
+        try {
+            optionalUser.get().setId(2);
+            service.create(userDTO);
+        } catch (Exception ex) {
+            assertEquals(DataIntegratyViolationException.class, ex.getClass());
+            assertEquals(EMAIL_CADASTRADO, ex.getMessage());
+        }
     }
 
     @Test
-    void delete() {
+    void whenUpdateTheReturnSuccess() {
+        when(repository.save(any())).thenReturn(user);
+        User response = service.update(userDTO);
+        assertNotNull(response);
+        assertEquals(User.class, response.getClass());
+        assertEquals(ID, response.getId());
+        assertEquals(EMAIL, response.getEmail());
+    }
+
+    @Test
+    void whenUpdateTheReturnDataIntegrityViolationException() {
+        when(repository.findByEmail(anyString())).thenReturn(optionalUser);
+        try {
+            optionalUser.get().setId(2);
+            service.create(userDTO);
+        } catch (Exception ex) {
+            assertEquals(DataIntegratyViolationException.class, ex.getClass());
+            assertEquals(EMAIL_CADASTRADO, ex.getMessage());
+        }
+    }
+
+    @Test
+    void whenDeleteWithSuccess() {
+        when(repository.findById(anyInt())).thenReturn(optionalUser);
+        doNothing().when(repository).deleteById(anyInt());
+        service.delete(ID);
+        verify(repository, times(1)).deleteById(anyInt());
+    }
+
+    @Test
+    void whenDeleteWithObjectNotFoundException() {
+        when(repository.findById(anyInt()))
+                .thenThrow(new ObjectNotFoundException(OBJECT_NOT_FOUND));
+        try {
+            service.delete(ID);
+        } catch (Exception ex) {
+            assertEquals(ObjectNotFoundException.class, ex.getClass());
+        }
     }
     
     private void startUser() {
