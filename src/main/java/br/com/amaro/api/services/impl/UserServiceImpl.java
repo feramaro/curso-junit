@@ -18,10 +18,8 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private ModelMapper mapper;
-
     @Autowired
     private UserRepository repository;
-
     @Override
     public User findById(Integer id) {
         Optional<User> obj = repository.findById(id);
